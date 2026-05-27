@@ -39,6 +39,11 @@ var newIgnitionTempFile = func() (ignitionTempFile, error) {
 
 var removeIgnitionFile = os.Remove
 
+// compileToIgnitionFunc is the injectable seam for ignition.CompileToIgnition.
+// Tests can replace this to simulate compilation failures without requiring
+// valid Butane input.
+var compileToIgnitionFunc = ignition.CompileToIgnition
+
 // NewFlatcarInstaller creates a FlatcarInstaller with the given runner and logger.
 func NewFlatcarInstaller(r runner.Runner, logger *slog.Logger) *FlatcarInstaller {
 	return &FlatcarInstaller{
@@ -73,7 +78,7 @@ func (i *FlatcarInstaller) Install(ctx context.Context, cfg *model.InstallConfig
 		// Compile to Ignition JSON via coreos/butane Go library
 		// (butane CLI is not available on Flatcar Container Linux)
 		progress("Compiling Ignition config...")
-		ignitionJSON, err := ignition.CompileToIgnition(butaneYAML)
+		ignitionJSON, err := compileToIgnitionFunc(butaneYAML)
 		if err != nil {
 			return fmt.Errorf("compiling butane: %w", err)
 		}
